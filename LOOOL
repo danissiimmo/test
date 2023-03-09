@@ -3,14 +3,12 @@
 #include <string.h>
 
 // Определяем максимальную длину каждого строкового поля
-#define MAX_DEST_LEN 50 
-#define MAX_TIME_LEN 10
 
 // Определяем структуру для представления каждой записи полета
 typedef struct {
     char flight_number; // номер рейса
-    char destination[MAX_DEST_LEN]; // место прибытия
-    char departure_time[MAX_TIME_LEN]; // время отправления
+    char destination[50]; // место прибытия
+    char departure_time[10]; // время отправления
     float ticket_price; // стоимость билета
     int available_seats; // свободные места на рейсе
 } FlightRecord;
@@ -36,10 +34,15 @@ int main(int argc, char *argv[]) {
   // Считываем записи из файла в односвязный список
   Node *head = read_records_from_file(filename);
   // Находим последний узел в списке
+
   Node *last_node = head;
-  while (last_node->next != NULL) {
-    last_node = last_node->next;
+  if (head != NULL) {
+    last_node = head;
+    while (last_node->next != NULL) {
+      last_node = last_node->next;
+    }
   }
+
   // Отображение меню и запрос у пользователя параметров
   char choice;
   do {
