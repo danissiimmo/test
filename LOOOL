@@ -1,0 +1,244 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Определяем максимальную длину каждого строкового поля
+#define MAX_DEST_LEN 50 
+#define MAX_TIME_LEN 10
+
+// Определяем структуру для представления каждой записи полета
+typedef struct {
+    char flight_number; // номер рейса
+    char destination[MAX_DEST_LEN]; // место прибытия
+    char departure_time[MAX_TIME_LEN]; // время отправления
+    float ticket_price; // стоимость билета
+    int available_seats; // свободные места на рейсе
+} FlightRecord;
+
+// Определяем структуру для узла односвязного списка
+typedef struct Node {
+    FlightRecord data;
+    struct Node *next; // указатель на другую структуру узла, которая представляет следующий узел в связанном списке
+} Node;
+
+void display_menu(); // отображение меню
+Node *read_records_from_file(const char *filename); // чтение записи рейса из бинарного файла
+void write_records_to_file(const char *filename, Node *head); // запись записи рейса в бинарный файл
+void add_record(Node **head, Node **last_node); // добавление записи
+void delete_last_record(Node **head); // удаление последней записи
+void display_records(Node *head); // отображение записей
+void search_by_flight_number(Node *head); // поиск по номеру рейса
+void search_by_destination(Node *head); // поиск по месту отправления
+
+int main(int argc, char *argv[]) {
+  // Проверка, было ли передано имя файла в качестве аргумента, в противном случае используем имя файла по умолчанию
+  const char *filename = (argc > 1) ? argv[1] : "flight_data.bin";
+  // Считываем записи из файла в односвязный список
+  Node *head = read_records_from_file(filename);
+  // Находим последний узел в списке
+  Node *last_node = head;
+  while (last_node->next != NULL) {
+    last_node = last_node->next;
+  }
+  // Отображение меню и запрос у пользователя параметров
+  char choice;
+  do {
+  display_menu(); // Отображение меню
+  scanf(" %c", &choice);
+  switch (choice) {
+    case '1':
+      add_record(&head, &last_node);
+  break;
+    case '2':
+      delete_last_record(&head);
+  break;
+    case '3':
+      display_records(head);
+  break;
+    case '4':
+      search_by_flight_number(head);
+  break;
+    case '5':
+      search_by_destination(head);
+  break;
+    case '6':
+      // Сохранием измененные записи обратно в файл и выходим из программы
+      write_records_to_file(filename, head);
+      printf("Выход из программы.\n");
+      break;
+  default:
+    printf("Некорректный выбор. Попробуйте заново.\n");
+    break;
+  }
+} while (choice != '6');
+
+    return 0;
+}
+
+// Отображение меню опций для пользователя
+void display_menu() {
+    printf("\nМеню:\n");
+    printf("1. Добавить запись\n");
+    printf("2. Удалить последнюю запись\n");
+    printf("3. Отобразить все записи\n");
+    printf("4. Поиск по номеру полета\n");
+    printf("5. Поиск по месту прибытия\n");
+    printf("6. Сохраненить и выйти\n");
+    printf("Сделайте Ваш выбор (1-6): ");
+}
+
+// Считывание записей о рейсах из бинароного файла в односвязный список
+Node *read_records_from_file(const char *filename) {
+    FILE *fp = fopen(filename, "rb");
+    Node *head = NULL;
+    if (fp != NULL) {
+        FlightRecord record;
+        // Считывание записи одну за другой, пока не будет достигнут конец файла
+        while (fread(&record, sizeof(record), 1, fp) == 1) {
+            Node *new_node = (Node *)malloc(sizeof(Node));
+            new_node->data = record;
+            new_node->next = head;
+            head = new_node;
+        }
+        fclose(fp);
+    }
+    return head;
+}
+
+// Записать записи о рейсах из односвязного списка обратно в бинарный файл
+void write_records_to_file(const char *filename, Node *head) {
+  FILE *fp = fopen(filename, "wb");
+  if (fp != NULL) {
+    // Проход по связанному списку и запись каждой записи полета в файл
+    Node *current = head;
+    while (current != NULL) {
+      fwrite(&(current->data), sizeof(FlightRecord), 1, fp);
+      current = current->next;
+    }
+    fclose(fp);
+  } else {
+      printf("Ошибка: невозможно открыть файл для записи.\n");
+  }
+}
+
+// Добавление новой записи о рейсе в конец связанного списка
+void add_record(Node **head, Node **last_node) {
+  FlightRecord record;
+  printf("Введите номер полета: ");
+  scanf(" %s", &(record.flight_number));
+  printf("Введите место прибытия: ");
+  scanf("%s", record.destination);
+  printf("Введите время вылета (ЧЧ:ММ): ");
+  scanf("%s", record.departure_time);
+  printf("Введите стоимость билета: ");
+  scanf("%f", &(record.ticket_price));
+  printf("Введите количество доступных мест: ");
+  scanf("%d", &(record.available_seats));
+  // Создание нового узла и добавление его в конец связанного списка
+  Node *new_node = (Node *)malloc(sizeof(Node));
+  new_node->data = record;
+  new_node->next = NULL;
+  if (*head == NULL) {
+      // Список пуст, поэтому сделаем новый узел заголовком и установим last_node на него
+      *head = new_node;
+      *last_node = new_node;
+  } else {
+      // Установим следующий указатель последнего узла на новый узел и обновим указатель last_node
+      (*last_node)->next = new_node;
+      *last_node = new_node;
+  }
+  printf("Запись полета успешно добавленна.\n");
+}
+
+// Удаление последней записи о рейсе из связанного списка
+void delete_last_record(Node **head) {
+  if (*head == NULL) {
+    printf("Ошибка: список пуст.\n");
+    return;
+  }
+  if ((*head)->next == NULL) {
+    // В списке есть только один узел, поэтому освобождаем его и установливаем head равным NULL
+    free(*head);
+    *head = NULL;
+  } else {
+      // Пройтись по списку, чтобы найти предпоследний узел
+      Node *second_last = *head;
+      while (second_last->next->next != NULL) {
+      second_last = second_last->next;
+  }
+  // Освободить последний узел и установить следующий указатель предпоследнего узла равным NULL
+  free(second_last->next);
+  second_last->next = NULL;
+  }
+  printf("Последняя запись о полете успешно удалена.\n");
+}
+
+// Отображение всех записей о рейсах в табличном формате
+void display_records(Node *head) {
+  printf("Номер полета | Место прибытия | Время отправления | Цена билета | Доступные места\n");
+  printf("---------------------------------------------------------------------------------\n");
+  if (head == NULL) {
+    printf("Не обнаруженно записей для показа.\n");
+  } else {
+  // Пройтись по списку и отобразить каждую запись
+  Node *current = head;
+  while (current != NULL) {
+  printf("%-13d| %-15s| %-18s| $%-11.2f| %-15d\n",
+  current->data.flight_number, current->data.destination,
+  current->data.departure_time, current->data.ticket_price,
+  current->data.available_seats);
+  current = current->next;
+  }
+  }
+}
+
+// Поиск записи о рейсе по номеру рейса
+void search_by_flight_number(Node *head) {
+  int search_num;
+  printf("Введите номер рейса для его поиска: ");
+  scanf("%d", &search_num);
+  // Просмотреть список и найти запись с соответствующим номером рейса
+  Node *current = head;
+  int found = 0; // Подтверждение нахождения сходства
+  while (current != NULL) {
+      if (current->data.flight_number == search_num) {
+          printf("Номер полета | Место прибытия | Время отправления | Цена билета | Доступные места\n");
+          printf("---------------------------------------------------------------------------------\n");
+          printf("%-13d| %-15s| %-18s| $%-11.2f| %-15d\n",
+              current->data.flight_number, current->data.destination,
+              current->data.departure_time, current->data.ticket_price,
+              current->data.available_seats);
+          found = 1;
+          break;
+      }
+      current = current->next;
+  }
+  if (!found) {
+      printf("Не обнаружено записей с данным номером рейса %d.\n", search_num);
+  }
+}
+
+// Поиск записи о рейсе по пункту назначения
+void search_by_destination(Node *head) {
+char search_dest[50];
+printf("Введите место прибытия для его поиска: ");
+scanf("%s", search_dest);
+// Просмотреть список и найти записи с соответствующим назначением
+Node *current = head;
+int found = 0; // Подтверждение нахождения сходства
+while (current != NULL) {
+    if (strcasecmp(current->data.destination, search_dest) == 0) {
+        printf("Номер полета | Место прибытия | Время отправления | Цена билета | Доступные места\n");
+        printf("---------------------------------------------------------------------------------\n");
+        printf("%-13d| %-15s| %-18s| $%-11.2f| %-15d\n",
+            current->data.flight_number, current->data.destination,
+            current->data.departure_time, current->data.ticket_price,
+            current->data.available_seats);
+        found = 1;
+    }
+    current = current->next;
+}
+if (!found) {
+    printf("Не обнаружено записей с данным местом прибытия %s.\n", search_dest);
+}
+}
