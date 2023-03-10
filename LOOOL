@@ -6,7 +6,7 @@
 
 // Определяем структуру для представления каждой записи полета
 typedef struct {
-    char flight_number[10]; // номер рейса
+    int flight_number; // номер рейса
     char destination[50]; // место прибытия
     char departure_time[10]; // время отправления
     float ticket_price; // стоимость билета
@@ -29,12 +29,12 @@ void search_by_flight_number(Node *head); // поиск по номеру рей
 void search_by_destination(Node *head); // поиск по месту отправления
 
 int main(int argc, char *argv[]) {
-  // Проверка, было ли передано имя файла в качестве аргумента, в противном случае используем имя файла по умолчанию
+  // Проверка, было ли передано имя файла в качестве аргумента, в противном случае используем имя файла по умолчанию(константой, как в задании)
   const char *filename = (argc > 1) ? argv[1] : "flight_data.bin";
   // Считываем записи из файла в односвязный список
   Node *head = read_records_from_file(filename);
+  
   // Находим последний узел в списке
-
   Node *last_node = head;
   if (head != NULL) {
     last_node = head;
@@ -128,7 +128,7 @@ void write_records_to_file(const char *filename, Node *head) {
 void add_record(Node **head, Node **last_node) {
   FlightRecord record;
   printf("Введите номер полета: ");
-  scanf(" %s", record.flight_number);
+  scanf("%d", &(record.flight_number));
   printf("Введите место прибытия: ");
   scanf("%s", record.destination);
   printf("Введите время вылета (ЧЧ:ММ): ");
@@ -136,7 +136,7 @@ void add_record(Node **head, Node **last_node) {
   printf("Введите стоимость билета: ");
   scanf("%f", &(record.ticket_price));
   printf("Введите количество доступных мест: ");
-  scanf(" %d", &(record.available_seats));
+  scanf("%d", &(record.available_seats));
   // Создание нового узла и добавление его в конец связанного списка
   Node *new_node = (Node *)malloc(sizeof(Node));
   new_node->data = record;
@@ -186,7 +186,7 @@ void display_records(Node *head) {
   // Пройтись по списку и отобразить каждую запись
   Node *current = head;
   while (current != NULL) {
-  printf("%-13s| %-15s| %-18s| $%-11.2f| %-15d\n",
+  printf("%-13d| %-15s| %-18s| $%-11.2f| %-15d\n",
   current->data.flight_number, current->data.destination,
   current->data.departure_time, current->data.ticket_price,
   current->data.available_seats);
@@ -207,7 +207,7 @@ void search_by_flight_number(Node *head) {
       if (current->data.flight_number == search_num) {
           printf("Номер полета | Место прибытия | Время отправления | Цена билета | Доступные места\n");
           printf("---------------------------------------------------------------------------------\n");
-          printf("%-13s| %-15s| %-18s| $%-11.2f| %-15d\n",
+          printf("%-13d| %-15s| %-18s| $%-11.2f| %-15d\n",
               current->data.flight_number, current->data.destination,
               current->data.departure_time, current->data.ticket_price,
               current->data.available_seats);
@@ -233,7 +233,7 @@ while (current != NULL) {
     if (strcasecmp(current->data.destination, search_dest) == 0) {
         printf("Номер полета | Место прибытия | Время отправления | Цена билета | Доступные места\n");
         printf("---------------------------------------------------------------------------------\n");
-        printf("%-13s| %-15s| %-18s| $%-11.2f| %-15d\n",
+        printf("%-13d| %-15s| %-18s| $%-11.2f| %-15d\n",
             current->data.flight_number, current->data.destination,
             current->data.departure_time, current->data.ticket_price,
             current->data.available_seats);
